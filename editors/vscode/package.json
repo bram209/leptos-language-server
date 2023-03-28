@@ -51,7 +51,7 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run esbuild-base -- --minify && cp ../../target/release/leptos-language-server* . && chmod +x ./leptos-language-server",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
     "esbuild-base": "esbuild ./client/src/extension.ts --bundle --outfile=./client/out/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild": "npm run esbuild-base -- --sourcemap",
     "compile": "tsc -b",

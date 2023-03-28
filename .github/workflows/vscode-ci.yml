@@ -69,9 +69,10 @@ jobs:
         shell: bash
         run: |
           outdir="./target/${{ env.TARGET_DIR }}/release"
-          staging="./editors/vscode/${{ env.BIN_NAME }}"
+          staging="./editors/vscode/"
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" "$staging/"
+            mv "$staging/${{ env.BIN_NAME }}.exe" "$staging/${{ env.BIN_NAME }}" 
           else
             cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}" "$staging/"
           fi
