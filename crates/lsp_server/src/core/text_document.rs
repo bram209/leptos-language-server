@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn test_position_to_byte_index() {
         let text = "line 1\nline 2\nline 3";
-        let rope = Rope::from(text.clone());
+        let rope = Rope::from(text);
 
         let byte_index = position_to_byte_index(
             &rope,

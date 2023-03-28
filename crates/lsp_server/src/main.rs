@@ -50,6 +50,7 @@ fn main_loop(
                     return Ok(());
                 }
 
+                #[allow(clippy::single_match)]
                 match req.method.as_str() {
                     Formatting::METHOD => {
                         handle_request::<Formatting>(&language_server, &connection, req)?;
@@ -122,7 +123,7 @@ where
 
 fn handle_notification<N>(
     language_server: &LanguageServer,
-    connection: &Connection,
+    _connection: &Connection,
     notif: lsp_server::Notification,
 ) -> Result<(), Box<dyn Error + Sync + Send>>
 where
