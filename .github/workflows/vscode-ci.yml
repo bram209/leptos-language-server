@@ -1,0 +1,94 @@
+name: VSCode extension CI
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*.*.*"
+
+env:
+  BIN_NAME: leptos-language-server
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+        - build: linux
+          platform: linux
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-musl
+          arch: x64
+          npm_config_arch: x64
+        - build: macos
+          platform: darwin
+          os: macos-latest
+          rust: stable
+          target: x86_64-apple-darwin
+          arch: x64
+          npm_config_arch: x64
+        - build: macos
+          platform: darwin
+          os: macos-latest
+          rust: stable
+          target: aarch64-apple-darwin
+          arch: arm64
+          npm_config_arch: arm64
+        - build: win-msvc
+          platform: win32
+          os: windows-latest
+          rust: stable
+          npm_config_arch: x64
+          arch: x64
+          target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install packages (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+          target: ${{ matrix.target }}
+      - name: Build release binary
+        run: cargo build --target ${{ matrix.target }} --verbose --release
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - run: npm install
+        working-directory: editors/vscode/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_arch: ${{ matrix.npm_config_arch }}
+      - name: Copy lsp binary
+        shell: bash
+        run: |
+          outdir="./target/${{ env.TARGET_DIR }}/release"
+          staging="./editors/vscode/${{ env.BIN_NAME }}"
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" "$staging/"
+          else
+            cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}" "$staging/"
+          fi
+      - shell: pwsh
+        run: echo "target=${{ matrix.platform }}-${{ matrix.arch }}" >> $env:GITHUB_ENV
+      - run: npx vsce package --target ${{ env.target }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.target }}
+          path: "*.vsix"
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    if: success() && startsWith( github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v2
+      - run: npx vsce publish --pre-release --packagePath $(find . -iname *.vsix)
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
