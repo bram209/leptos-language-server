@@ -68,7 +68,6 @@ jobs:
       - name: Copy lsp binary
         shell: bash
         run: |
-          outdir="./target/${{ env.TARGET_DIR }}/release"
           staging="./editors/vscode/"
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" "$staging/"
